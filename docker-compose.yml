@@ -1,0 +1,47 @@
+# works with
+# ngrok http --region=us --hostname=icullinane.ngrok.io localhost:8000
+version: '3.5'
+
+services:
+  drone-server:
+    image: drone/drone:2
+    ports:
+      - 8000:80
+      - 9000:443
+    networks:
+      - drone
+    volumes:
+      - ./drone-data:/var/lib/drone/
+      - /var/run/docker.sock:/var/run/docker.sock
+    # env_file:
+    #   - ./drone.env
+    restart: always
+    environment:
+      - DRONE_GITHUB_CLIENT_ID=5d15fdef826d288807fd
+      - DRONE_GITHUB_CLIENT_SECRET=a267595995551f6828a080589868d348609647a6
+      - DRONE_RPC_SECRET=6dfb34f68d1384101e641d48d1adf01e
+      - DRONE_SERVER_HOST=icullinane.ngrok.com
+      - DRONE_SERVER_PROTO=https
+
+  drone-agent:
+    image: drone/drone-runner-docker:1
+    command: agent
+    restart: always
+    ports:
+      - 3000:3000
+    depends_on:
+      - drone-server
+    networks:
+      - drone
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    # env_file:
+    #   - ./drone.env
+    environment:
+      - DRONE_RPC_HOST=icullinane.ngrok.io
+      - DRONE_RPC_PROTO=https
+      - DRONE_RPC_SECRET=6dfb34f68d1384101e641d48d1adf01e
+
+networks:
+  drone:
+    name: drone_network
